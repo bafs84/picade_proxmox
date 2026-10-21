@@ -1,0 +1,28 @@
+{
+  "poll_seconds": 0.5,
+  "traffic_poll_seconds": 0.5,
+  "stale_seconds": 20,
+  "nodes": [
+    {
+      "name": "node-a",
+      "url": "https://192.0.2.101:8006",
+      "ca_file": "node-a-ca.pem",
+      "token_id": "monitor@pve!dashboard",
+      "token_file": "node-a.token"
+    },
+    {
+      "name": "node-b",
+      "url": "https://192.0.2.102:8006",
+      "ca_file": "node-b-ca.pem",
+      "token_id": "monitor@pve!dashboard",
+      "token_file": "node-b.token"
+    },
+    {
+      "name": "node-c",
+      "url": "https://192.0.2.103:8006",
+      "ca_file": "node-c-ca.pem",
+      "token_id": "monitor@pve!dashboard",
+      "token_file": "node-c.token"
+    }
+  ]
+}

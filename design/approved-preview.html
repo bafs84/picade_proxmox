@@ -1,0 +1,342 @@
+<div id="vm-arcade-telemetry">
+  <style>
+    #vm-arcade-telemetry {
+      --va-bg: light-dark(#edf4f4, #081114);
+      --va-panel: light-dark(#f8fcfc, #0c191e);
+      --va-ink: light-dark(#19373c, #d4e8eb);
+      --va-muted: light-dark(#526d73, #8aa6ae);
+      --va-line: light-dark(#b8ced1, #254149);
+      --va-active: light-dark(#dfedef, #162e35);
+      --va-cyan: light-dark(#007e90, #68d8e5);
+      --va-violet: light-dark(#8060a3, #b6a0d3);
+      --va-amber: light-dark(#906200, #e2ba72);
+      --va-track: light-dark(#e0eaec, #1b3037);
+      color-scheme: dark; color: var(--va-ink);
+      font: 12px/1.45 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+      font-variant-numeric: tabular-nums; width: 100%;
+    }
+    #vm-arcade-telemetry * { box-sizing: border-box; }
+    #vm-arcade-telemetry [hidden] { display: none !important; }
+    #vm-arcade-telemetry button { font: inherit; color: inherit; }
+    #vm-arcade-telemetry .va-terminal { background: var(--va-bg); padding: 0 14px; }
+    #vm-arcade-telemetry .va-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; min-height: 57px; padding: 12px 96px 12px 0; border-bottom: 1px solid var(--va-line); }
+    #vm-arcade-telemetry .va-brand { font-size: 19px; font-weight: 500; letter-spacing: 1.5px; }
+    #vm-arcade-telemetry .va-brand span { color: var(--va-cyan); }
+    #vm-arcade-telemetry .va-subtitle { color: var(--va-muted); font-size: 11px; letter-spacing: 1px; }
+    #vm-arcade-telemetry .va-demo { color: var(--va-amber); font-size: 11px; white-space: nowrap; }
+    #vm-arcade-telemetry .va-hosts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 12px 0; }
+    #vm-arcade-telemetry .va-host { text-align: left; background: transparent; border: 1px solid var(--va-line); padding: 9px 12px; min-width: 0; position: relative; }
+    #vm-arcade-telemetry .va-host[aria-pressed="true"] { background: var(--va-active); }
+    #vm-arcade-telemetry .va-host[aria-pressed="true"]::before { content: ""; position: absolute; top: -1px; left: -1px; bottom: -1px; width: 3px; background: var(--va-cyan); }
+    #vm-arcade-telemetry .va-host-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    #vm-arcade-telemetry .va-host-name { font-size: 16px; font-weight: 500; }
+    #vm-arcade-telemetry .va-host-status { font-size: 11px; color: var(--va-muted); }
+    #vm-arcade-telemetry .va-host-stats { display: flex; flex-wrap: wrap; gap: 3px 18px; margin-top: 5px; font-size: 11px; }
+    #vm-arcade-telemetry .va-host-stats b { font-weight: 500; }
+    #vm-arcade-telemetry .va-muted { color: var(--va-muted); }
+    #vm-arcade-telemetry .va-context { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; padding: 0 0 9px; color: var(--va-muted); font-size: 11px; }
+    #vm-arcade-telemetry .va-context strong { color: var(--va-ink); font-weight: 500; }
+    #vm-arcade-telemetry .va-stale { color: var(--va-amber); }
+    #vm-arcade-telemetry .va-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 10px; }
+    #vm-arcade-telemetry .va-panel { position: relative; border: 1px solid var(--va-line); background: var(--va-panel); padding: 11px 12px; min-width: 0; }
+    #vm-arcade-telemetry .va-panel::before { content: ""; position: absolute; top: -1px; left: 12px; width: 27px; height: 2px; background: var(--va-muted); }
+    #vm-arcade-telemetry .va-panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 9px; }
+    #vm-arcade-telemetry .va-panel h2 { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 1.4px; color: var(--va-muted); }
+    #vm-arcade-telemetry .va-panel-head > span { font-size: 11px; color: var(--va-muted); }
+    #vm-arcade-telemetry .va-cpu { grid-column: span 6; }
+    #vm-arcade-telemetry .va-memory, #vm-arcade-telemetry .va-network { grid-column: span 3; }
+    #vm-arcade-telemetry .va-storage { grid-column: span 4; }
+    #vm-arcade-telemetry .va-vms { grid-column: span 8; }
+    #vm-arcade-telemetry .va-large-line { display: flex; align-items: baseline; gap: 10px; }
+    #vm-arcade-telemetry .va-large { font-size: 32px; font-weight: 400; line-height: 1.1; letter-spacing: -1.5px; }
+    #vm-arcade-telemetry .va-large small { font-size: 14px; letter-spacing: 0; margin-left: 3px; color: var(--va-muted); }
+    #vm-arcade-telemetry .va-sub { font-size: 11px; color: var(--va-muted); }
+    #vm-arcade-telemetry .va-machine { font-size: 11px; color: var(--va-muted); margin: 5px 0 0; }
+    #vm-arcade-telemetry .va-chart { width: 100%; height: 100px; margin-top: 5px; }
+    #vm-arcade-telemetry .va-chart svg { display: block; overflow: visible; }
+    #vm-arcade-telemetry .va-chart text { fill: var(--va-muted); font: 11px ui-monospace, Menlo, monospace; }
+    #vm-arcade-telemetry .va-chart .va-gridline { stroke: var(--va-line); stroke-width: 1; }
+    #vm-arcade-telemetry .va-chart .va-trace { fill: none; stroke: var(--va-cyan); stroke-width: 1.6; }
+    #vm-arcade-telemetry .va-chart .va-area { fill: var(--va-cyan); opacity: .08; }
+    #vm-arcade-telemetry .va-chart .va-secondary { stroke: var(--va-violet); stroke-dasharray: 3 3; }
+    #vm-arcade-telemetry .va-load { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--va-line); padding-top: 8px; margin-top: 3px; gap: 8px; }
+    #vm-arcade-telemetry .va-load span { display: block; font-size: 11px; color: var(--va-muted); }
+    #vm-arcade-telemetry .va-load b { font-size: 17px; font-weight: 400; }
+    #vm-arcade-telemetry .va-track { height: 8px; background: var(--va-track); margin: 10px 0; overflow: hidden; }
+    #vm-arcade-telemetry .va-fill { height: 100%; background: var(--va-cyan); }
+    #vm-arcade-telemetry .va-swap .va-fill { background: var(--va-violet); }
+    #vm-arcade-telemetry .va-pair { display: flex; justify-content: space-between; gap: 8px; margin: 7px 0; }
+    #vm-arcade-telemetry .va-pair > :first-child { color: var(--va-muted); }
+    #vm-arcade-telemetry .va-pair > :last-child { text-align: right; }
+    #vm-arcade-telemetry .va-divider { border-top: 1px solid var(--va-line); padding-top: 8px; margin-top: 13px; }
+    #vm-arcade-telemetry .va-memory .va-large { margin-top: 15px; }
+    #vm-arcade-telemetry .va-net-value { font-size: 22px; letter-spacing: -1px; }
+    #vm-arcade-telemetry .va-net-value small { font-size: 11px; letter-spacing: 0; color: var(--va-muted); }
+    #vm-arcade-telemetry .va-net-label { display: inline-block; width: 24px; font-size: 11px; }
+    #vm-arcade-telemetry .va-swatch { display: inline-block; width: 13px; height: 2px; background: var(--va-cyan); margin-right: 6px; vertical-align: middle; }
+    #vm-arcade-telemetry .va-swatch.va-tx { background: repeating-linear-gradient(90deg, var(--va-violet) 0 3px, transparent 3px 5px); }
+    #vm-arcade-telemetry .va-network .va-chart { height: 88px; margin-top: 13px; }
+    #vm-arcade-telemetry .va-storage-name { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; font-size: 13px; margin-top: 15px; }
+    #vm-arcade-telemetry .va-storage-used { font-size: 25px; margin-top: 6px; letter-spacing: -1px; }
+    #vm-arcade-telemetry .va-storage-used small { font-size: 12px; color: var(--va-muted); letter-spacing: 0; }
+    #vm-arcade-telemetry .va-table { width: 100%; border-collapse: collapse; text-align: right; font-size: 11px; }
+    #vm-arcade-telemetry .va-table th { font-weight: 400; color: var(--va-muted); padding: 0 6px 7px; white-space: nowrap; }
+    #vm-arcade-telemetry .va-table th:first-child { text-align: left; }
+    #vm-arcade-telemetry .va-table td { padding: 8px 6px; border-top: 1px solid var(--va-line); }
+    #vm-arcade-telemetry .va-table tr.va-selected td { background: var(--va-active); }
+    #vm-arcade-telemetry .va-table td:first-child { text-align: left; }
+    #vm-arcade-telemetry .va-vm-button { display: block; width: 100%; padding: 0; border: 0; background: transparent; text-align: left; }
+    #vm-arcade-telemetry .va-vm-button span { display: block; color: var(--va-muted); font-size: 11px; }
+    #vm-arcade-telemetry .va-vm-button b { font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
+    #vm-arcade-telemetry .va-cell-stack { display: block; color: var(--va-muted); white-space: nowrap; }
+    #vm-arcade-telemetry .va-selected-detail { border-top: 1px solid var(--va-line); padding-top: 9px; margin-top: 10px; }
+    #vm-arcade-telemetry .va-detail-title { display: flex; justify-content: space-between; gap: 7px; flex-wrap: wrap; font-size: 11px; margin-bottom: 7px; }
+    #vm-arcade-telemetry .va-detail-title span { color: var(--va-muted); }
+    #vm-arcade-telemetry .va-io-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    #vm-arcade-telemetry .va-io-grid span { display: block; font-size: 11px; color: var(--va-muted); margin-bottom: 2px; }
+    #vm-arcade-telemetry .va-io-grid b { display: block; font-size: 13px; font-weight: 400; }
+    #vm-arcade-telemetry .va-io-grid small { font-size: 11px; color: var(--va-muted); }
+    #vm-arcade-telemetry .va-detail-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 20px; padding: 5px 0 8px; }
+    #vm-arcade-telemetry .va-detail-metrics .va-pair { margin: 4px 0; }
+    #vm-arcade-telemetry .va-vm-title { margin: 5px 0 12px; font-size: 18px; font-weight: 400; overflow-wrap: anywhere; }
+    #vm-arcade-telemetry .va-footer { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding: 10px 0; color: var(--va-muted); font-size: 11px; }
+    #vm-arcade-telemetry .va-launcher { padding: 46px 12px 60px; }
+    #vm-arcade-telemetry .va-launch { display: block; margin-top: 18px; width: 100%; padding: 25px 20px; background: var(--va-active); border: 1px solid var(--va-line); text-align: left; font-size: 24px; }
+    #vm-arcade-telemetry .va-launch span { display: block; font-size: 12px; color: var(--va-muted); margin-top: 6px; }
+    #vm-arcade-telemetry .va-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    @media (max-width: 720px) {
+      #vm-arcade-telemetry .va-cpu { grid-column: span 12; }
+      #vm-arcade-telemetry .va-memory, #vm-arcade-telemetry .va-network { grid-column: span 6; }
+      #vm-arcade-telemetry .va-storage, #vm-arcade-telemetry .va-vms { grid-column: span 12; }
+      #vm-arcade-telemetry .va-storage-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      #vm-arcade-telemetry .va-storage-name { margin-top: 3px; }
+      #vm-arcade-telemetry .va-storage .va-divider { margin-top: 0; padding-top: 0; border-top: 0; }
+      #vm-arcade-telemetry .va-host { padding: 8px; }
+      #vm-arcade-telemetry .va-host-head { flex-wrap: wrap; gap: 0 6px; }
+    }
+    @media (max-width: 400px) {
+      #vm-arcade-telemetry .va-terminal { padding: 0 8px; }
+      #vm-arcade-telemetry .va-hosts { gap: 6px; }
+      #vm-arcade-telemetry .va-host-stats { display: block; }
+      #vm-arcade-telemetry .va-host-stats > span { display: block; margin-top: 3px; }
+      #vm-arcade-telemetry .va-host-stats .va-host-total { display: none; }
+      #vm-arcade-telemetry .va-panel { padding: 10px; }
+      #vm-arcade-telemetry .va-memory, #vm-arcade-telemetry .va-network { grid-column: span 12; }
+      #vm-arcade-telemetry .va-storage-layout, #vm-arcade-telemetry .va-detail-metrics { grid-template-columns: 1fr; gap: 5px; }
+      #vm-arcade-telemetry .va-table th, #vm-arcade-telemetry .va-table td { padding-left: 4px; padding-right: 4px; }
+      #vm-arcade-telemetry .va-table .va-vcpu-col { display: none; }
+      #vm-arcade-telemetry .va-io-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    }
+    @media (pointer: coarse) {
+      #vm-arcade-telemetry .va-host, #vm-arcade-telemetry .va-vm-button { min-height: 44px; }
+    }
+  </style>
+  <div class="va-terminal" aria-label="VM Arcade telemetry dashboard">
+    <header class="va-header">
+      <div><div class="va-brand">VM<span>/</span>ARCADE</div><div class="va-subtitle">PROXMOX LAB · RETROPIE</div></div>
+      <div class="va-demo">DEMO TELEMETRY / NOT LIVE</div>
+    </header>
+    <nav class="va-hosts" aria-label="Proxmox hosts"></nav>
+    <div class="va-context"></div>
+    <main class="va-grid" aria-label="Selected host telemetry"></main>
+    <section class="va-launcher" hidden aria-label="RetroPie menu preview">
+      <div class="va-muted">EMULATIONSTATION / PORTS · PREVIEW</div>
+      <button type="button" class="va-launch cursor-interaction" data-action="launch">VM/ARCADE<span>Proxmox telemetry</span></button>
+    </section>
+    <footer class="va-footer"><span>PICADE / MONITOR ONLY</span><span class="va-footer-status"></span></footer>
+    <div class="va-sr" role="status" aria-live="polite"></div>
+  </div>
+  <script>
+    (() => {
+      const root = document.getElementById('vm-arcade-telemetry');
+      const hosts = [
+        {name:'node-a',ip:'192.0.2.101',cpu:18,wait:0.6,load:[2.64,3.18,2.91],ram:9.8,available:20.4,swap:0.2,storage:238,rx:8.4,tx:3.1,uptime:'12d 04h 18m',
+          vms:[{id:201,name:'edge-gateway',state:'running',cores:2,cpu:12,ram:0.8,maxram:2,disk:32,rx:3.2,tx:2.4,read:0.2,write:0.8,uptime:'12d 03h'},
+               {id:202,name:'research-api',state:'running',cores:4,cpu:28,ram:3.2,maxram:8,disk:64,rx:5.2,tx:0.7,read:2.6,write:4.1,uptime:'3d 04h'}]},
+        {name:'node-b',ip:'192.0.2.102',cpu:42,wait:2.1,load:[8.72,7.48,5.32],ram:18.7,available:11.6,swap:0.6,storage:516,rx:14.2,tx:6.8,uptime:'12d 03h 42m',
+          vms:[{id:211,name:'analysis-lab',state:'running',cores:8,cpu:78,ram:11.8,maxram:16,disk:256,rx:14.2,tx:6.8,read:84.3,write:28.6,uptime:'2h 18m'},
+               {id:212,name:'sandbox',state:'stopped',cores:4,cpu:0,ram:0,maxram:4,disk:64,rx:0,tx:0,read:0,write:0,uptime:'—'}]},
+        {name:'node-c',ip:'192.0.2.103',cpu:11,wait:0.3,load:[1.26,1.44,1.62],ram:8.1,available:22.2,swap:0,storage:184,rx:2.6,tx:1.8,uptime:'12d 03h 10m',
+          vms:[{id:221,name:'lab-notebook',state:'running',cores:4,cpu:8,ram:2.1,maxram:8,disk:64,rx:1.8,tx:1.3,read:1.2,write:0.4,uptime:'5d 11h'},
+               {id:222,name:'metrics',state:'running',cores:2,cpu:17,ram:1.4,maxram:4,disk:128,rx:0.8,tx:0.5,read:0.4,write:3.2,uptime:'12d 02h'}]}
+      ];
+      const config = {offline:false,dark:true};
+      const state = {host:0,guest:0,view:'dashboard'};
+      const nav = root.querySelector('.va-hosts'), grid = root.querySelector('.va-grid');
+      const context = root.querySelector('.va-context'), launcher = root.querySelector('.va-launcher');
+      const status = root.querySelector('[role="status"]');
+      let chartObserver;
+      const number = value => value.toFixed(1);
+      const stateLabel = vm => config.offline ? 'unknown' : vm.state;
+      const pct = (used,total) => Math.round(used / total * 100);
+      function meter(label,used,total,swap=false) {
+        return `<div class="va-track${swap?' va-swap':''}" role="meter" aria-label="${label}" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${used}"><div class="va-fill" style="width:${used/total*100}%"></div></div>`;
+      }
+      function pair(label,value) { return `<div class="va-pair"><span>${label}</span><span>${value}</span></div>`; }
+      function io(vm) {
+        return `<div class="va-io-grid">${[['NET RX',vm.rx],['NET TX',vm.tx],['DISK READ',vm.read],['DISK WRITE',vm.write]].map(([label,value])=>`<div><span>${label}</span><b>${number(value)} <small>MiB/s</small></b></div>`).join('')}</div>`;
+      }
+      function applySaved(saved) {
+        const s = saved?.privateContent;
+        if (!s || s.kind !== 'vm-arcade-telemetry-v2') return;
+        if (Number.isInteger(s.host) && s.host >= 0 && s.host < hosts.length) state.host=s.host;
+        if (Number.isInteger(s.guest) && s.guest >= 0 && s.guest < hosts[state.host].vms.length) state.guest=s.guest;
+        if (['dashboard','detail','retropie'].includes(s.view)) state.view=s.view;
+        if (typeof s.offline === 'boolean') config.offline=s.offline;
+        if (typeof s.dark === 'boolean') config.dark=s.dark;
+      }
+      function persist() {
+        window.openai?.setWidgetState?.({
+          modelContent:{concept:'VM Arcade telemetry on RetroPie',host:hosts[state.host].name,vm:hosts[state.host].vms[state.guest].id,view:state.view,usesDemoData:true,controlsHidden:true},
+          privateContent:{kind:'vm-arcade-telemetry-v2',...state,...config}
+        })?.catch?.(()=>{});
+      }
+      function history(last,amplitude,phase) {
+        return Array.from({length:61},(_,i)=>{
+          const wave = Math.sin(i*.31+phase)*.6+Math.sin(i*.82+phase)*.25+Math.cos(i*.11)*.15;
+          const baseline = Math.sin(60*.31+phase)*.6+Math.sin(60*.82+phase)*.25+Math.cos(60*.11)*.15;
+          return Math.max(0,last+(wave-baseline)*amplitude);
+        });
+      }
+      function chart(element,series,max,label) {
+        const width = Math.round(element.getBoundingClientRect().width);
+        if (width<50) return;
+        const height = Math.round(element.getBoundingClientRect().height);
+        const left=32, right=8, top=9, bottom=22;
+        const plotWidth=width-left-right, plotHeight=height-top-bottom;
+        const points = values => values.map((v,i)=>`${(left+i/(values.length-1)*plotWidth).toFixed(1)},${(top+(1-v/max)*plotHeight).toFixed(1)}`).join(' ');
+        const base = top+plotHeight;
+        element.innerHTML=`<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}">
+          <title>${label}</title>
+          <line class="va-gridline" x1="${left}" y1="${top}" x2="${width-right}" y2="${top}"/>
+          <line class="va-gridline" x1="${left}" y1="${top+plotHeight/2}" x2="${width-right}" y2="${top+plotHeight/2}"/>
+          <line class="va-gridline" x1="${left}" y1="${base}" x2="${width-right}" y2="${base}"/>
+          <text x="0" y="${top+4}">${max}</text><text x="16" y="${base+4}">0</text>
+          <text x="${left}" y="${height-3}">−60m</text><text x="${width-right}" y="${height-3}" text-anchor="end">now</text>
+          <polygon class="va-area" points="${left},${base} ${points(series[0])} ${width-right},${base}"/>
+          ${series.map((values,i)=>`<polyline class="va-trace${i?' va-secondary':''}" points="${points(values)}"/>`).join('')}
+        </svg>`;
+      }
+      function drawCharts() {
+        const h=hosts[state.host], cpu=root.querySelector('[data-chart="cpu"]'), net=root.querySelector('[data-chart="net"]');
+        if(cpu) chart(cpu,[history(h.cpu,9,state.host)],100,`${h.name} demo CPU usage in percent over the last 60 minutes. Latest ${h.cpu} percent.`);
+        if(net) {
+          const rx=history(h.rx,2,state.host), tx=history(h.tx,1,state.host+1);
+          const max=Math.ceil(Math.max(...rx,...tx)/5)*5;
+          chart(net,[rx,tx],max,`${h.name} demo network traffic in MiB per second over 60 minutes. Receive ${h.rx}, transmit ${h.tx}.`);
+        }
+      }
+      function render() {
+        const active=document.activeElement;
+        const focusType=active?.dataset?.host!==undefined?'host':active?.dataset?.guest!==undefined?'guest':active?.dataset?.action?'action':null;
+        const focusValue=focusType?active.dataset[focusType]:null;
+        const h=hosts[state.host], vm=h.vms[state.guest], exited=state.view==='retropie';
+        root.style.colorScheme=config.dark?'dark':'light';
+        nav.hidden=exited; grid.hidden=exited; context.hidden=exited; launcher.hidden=!exited;
+        nav.innerHTML=hosts.map((host,i)=>`<button type="button" class="va-host cursor-interaction" data-host="${i}" aria-label="${host.name} host" aria-pressed="${i===state.host}">
+          <span class="va-host-head"><span class="va-host-name">${host.name}</span><span class="va-host-status">${config.offline?'? UNKNOWN':'● ONLINE'}</span></span>
+          <span class="va-host-stats"><span><span class="va-muted">CPU</span> <b>${host.cpu}%</b></span><span><span class="va-muted">RAM</span> <b>${host.ram}<span class="va-host-total">/31.2</span>G</b></span></span>
+        </button>`).join('');
+        context.innerHTML=`<span><strong>${h.name}</strong> / ${h.ip} <span class="va-muted">· HOST</span></span><span class="${config.offline?'va-stale':''}">${config.offline?'LINK LOST · SAMPLE 2m OLD · CURRENT STATE UNKNOWN':'SAMPLE WINDOW 60m · REFRESH TARGET 5s'}</span>`;
+        grid.innerHTML=`
+          <section class="va-panel va-cpu" aria-label="Host CPU and load">
+            <div class="va-panel-head"><h2>CPU / HOST</h2><span>20 THREADS</span></div>
+            <div class="va-large-line"><div class="va-large">${h.cpu}<small>%</small></div><span class="va-sub">I/O wait ${h.wait}%</span></div>
+            <div class="va-machine">Intel i7-12700T · 12 cores</div>
+            <div class="va-chart" data-chart="cpu"></div>
+            <div class="va-load">${h.load.map((v,i)=>`<div><span>LOAD ${[1,5,15][i]}m</span><b>${v.toFixed(2)}</b></div>`).join('')}</div>
+          </section>
+          <section class="va-panel va-memory" aria-label="Host RAM and swap">
+            <div class="va-panel-head"><h2>MEMORY</h2><span>${pct(h.ram,31.2)}%</span></div>
+            <div class="va-large">${h.ram}<small>GiB</small></div><div class="va-sub">used / 31.2 GiB total</div>
+            ${meter('Host RAM used in GiB',h.ram,31.2)}${pair('Available',number(h.available)+' GiB')}
+            <div class="va-divider">${pair('Swap',number(h.swap)+' / 8.0 GiB')}${meter('Host swap used in GiB',h.swap,8,true)}<div class="va-sub">${pct(h.swap,8)}% swap used</div></div>
+          </section>
+          <section class="va-panel va-network" aria-label="Host network traffic">
+            <div class="va-panel-head"><h2>NETWORK</h2><span>HOST</span></div>
+            <div><span class="va-swatch"></span><span class="va-net-label">RX</span><span class="va-net-value">${number(h.rx)} <small>MiB/s</small></span></div>
+            <div><span class="va-swatch va-tx"></span><span class="va-net-label">TX</span><span class="va-net-value">${number(h.tx)} <small>MiB/s</small></span></div>
+            <div class="va-chart" data-chart="net"></div><div class="va-sub">RX solid / TX dashed</div>
+          </section>
+          <section class="va-panel va-storage" aria-label="Host storage and uptime">
+            <div class="va-panel-head"><h2>STORAGE / HOST</h2><span>${pct(h.storage,894)}%</span></div>
+            <div class="va-storage-layout"><div>
+              <div class="va-storage-name"><span>local-btrfs</span><span class="va-muted">BTRFS</span></div>
+              <div class="va-storage-used">${h.storage} <small>/ 894 GiB</small></div>
+              ${meter('Storage used in GiB',h.storage,894)}${pair('Available',(894-h.storage)+' GiB')}
+            </div><div class="va-divider">
+              ${pair('Host uptime',h.uptime)}
+              ${pair('Guests running',config.offline?'unknown':h.vms.filter(g=>g.state==='running').length+' / '+h.vms.length)}
+              ${pair('Hypervisor','Proxmox VE')}
+            </div></div>
+          </section>
+          <section class="va-panel va-vms" aria-label="Virtual machines">
+            <div class="va-panel-head"><h2>${state.view==='detail'?'VM / DETAIL':'VIRTUAL MACHINES'}</h2><span>${h.name} / ${h.vms.length} GUESTS</span></div>
+            ${state.view==='detail'?`
+              <div class="va-detail-title"><span>VM ${vm.id}</span><span>${stateLabel(vm).toUpperCase()}</span></div>
+              <h3 class="va-vm-title">${vm.name}</h3>
+              <div class="va-detail-metrics">
+                <div>${pair('CPU',vm.cpu+'% / '+vm.cores+' vCPU')}${meter('VM CPU usage percent',vm.cpu,100)}</div>
+                <div>${pair('RAM',number(vm.ram)+' / '+vm.maxram+' GiB')}${meter('VM RAM used in GiB',vm.ram,vm.maxram)}</div>
+                ${pair('Uptime',vm.uptime)}${pair('Boot disk capacity',vm.disk+' GiB')}
+              </div><div class="va-selected-detail">${io(vm)}</div>
+            `:`
+              <table class="va-table">
+                <thead><tr><th scope="col">VM / NAME</th><th scope="col">STATE</th><th class="va-vcpu-col" scope="col">vCPU</th><th scope="col">CPU</th><th scope="col">RAM GiB</th></tr></thead>
+                <tbody>${h.vms.map((g,i)=>`<tr class="${i===state.guest?'va-selected':''}">
+                  <td><button type="button" class="va-vm-button cursor-interaction" data-guest="${i}" aria-pressed="${i===state.guest}" aria-label="VM ${g.id}, ${g.name}"><b>${g.name}</b><span>${g.id}</span></button></td>
+                  <td>${stateLabel(g)}</td><td class="va-vcpu-col">${g.cores}</td><td>${g.cpu}%</td><td>${number(g.ram)}<span class="va-cell-stack">/ ${g.maxram}</span></td>
+                </tr>`).join('')}</tbody>
+              </table>
+              <div class="va-selected-detail"><div class="va-detail-title"><span>VM ${vm.id} / I/O</span><span>UPTIME ${vm.uptime}</span></div>${io(vm)}</div>
+            `}
+          </section>`;
+        root.querySelector('.va-footer-status').textContent=config.offline?'CACHED DEMO VALUES · NOT CURRENT':'FICTIONAL VM INVENTORY · READ ONLY';
+        chartObserver?.disconnect();
+        drawCharts();
+        chartObserver=new ResizeObserver(drawCharts);
+        root.querySelectorAll('.va-chart').forEach(el=>chartObserver.observe(el));
+        if (focusType && !active.isConnected) {
+          const replacement=root.querySelector(`[data-${focusType}="${focusValue}"]`);
+          if(replacement && !replacement.closest('[hidden]')) replacement.focus({preventScroll:true});
+          else if(exited) launcher.querySelector('button').focus({preventScroll:true});
+          else nav.querySelector(`[data-host="${state.host}"]`).focus({preventScroll:true});
+        } else if(exited && root.contains(active) && !launcher.contains(active)) launcher.querySelector('button').focus({preventScroll:true});
+      }
+      function announce() {
+        status.textContent=state.view==='retropie'?'RetroPie launcher preview':`${hosts[state.host].name}, ${state.view}, selected VM ${hosts[state.host].vms[state.guest].name}${config.offline?', cached data, current state unknown':''}`;
+      }
+      function act(action) {
+        if(action==='left'||action==='right') {state.host=(state.host+(action==='left'?2:1))%3;state.guest=0;if(state.view==='retropie')state.view='dashboard';}
+        if(action==='up'||action==='down') state.guest=(state.guest+1)%hosts[state.host].vms.length;
+        if(action==='open') state.view=state.view==='retropie'?'dashboard':'detail';
+        if(action==='back') state.view=state.view==='detail'?'dashboard':'retropie';
+        if(action==='overview'||action==='launch') state.view='dashboard';
+        if(action==='exit') state.view='retropie';
+        render();announce();persist();
+      }
+      root.addEventListener('click',event=>{
+        const button=event.target.closest('button');
+        if(!button||!root.contains(button))return;
+        if(button.dataset.host!==undefined) {state.host=Number(button.dataset.host);state.guest=0;state.view='dashboard';render();announce();persist();}
+        else if(button.dataset.guest!==undefined) {state.guest=Number(button.dataset.guest);render();announce();persist();}
+        else if(button.dataset.action) act(button.dataset.action);
+      });
+      root.addEventListener('keydown',event=>{
+        if(event.ctrlKey||event.metaKey||event.altKey)return;
+        const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',a:'open',Enter:'open',b:'back',Escape:'back',x:'overview',s:'overview',Backspace:'exit'};
+        if(map[event.key]) {event.preventDefault();act(map[event.key]);}
+      });
+      applySaved(window.openai?.widgetState);
+      render();
+      window.addEventListener('openai:set_globals',event=>{
+        if(event.detail?.globals?.widgetState){applySaved(event.detail.globals.widgetState);render();}
+      });
+      if(globalThis.Tweak) {
+        const tweak=new Tweak({container:root.querySelector('.va-terminal'),onChange:()=>{render();announce();persist();}});
+        tweak.addToggle(config,'offline',{label:'Simulate stale telemetry'});
+        tweak.addToggle(config,'dark',{label:'Dark terminal'});
+      }
+    })();
+  </script>
+</div>

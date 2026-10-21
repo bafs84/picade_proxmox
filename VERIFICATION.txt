@@ -1,0 +1,32 @@
+VM Arcade public source validation
+
+Automated suite:
+  50 tests cover telemetry deltas and resets, missing/stale data, topology,
+  byte-volume particle emission, continuous journeys, history bounds,
+  per-thread CPU counters, read-only API requests, TLS pin validation,
+  credential-file ownership/modes, cabinet exit overrides, menu installation,
+  rollback preservation and screenshot output-size allocation.
+
+Compatibility:
+  The underlying implementation was tested with Python 3.11 / PySDL2 0.9.17
+  on macOS, and Python 3.7.3 / PySDL2 0.9.3 / SDL2 2.0.10 on a Raspberry Pi 3.
+  Native 800x600 output, cabinet menu launch and return were verified.
+  Long unattended operation and other cabinet/controller revisions have not
+  been comprehensively tested.
+
+Public snapshot:
+  Private operational records and previous local Git history are excluded.
+  Example node names, addresses and workloads are illustrative. Credentials,
+  host fingerprints, private network addresses, live captures, deployment
+  locations and personal email addresses are not included.
+  Gitleaks scans of the complete public history and tracked-file export found
+  no secrets. Exact comparisons against private dashboard token files and
+  a separate infrastructure-metadata check also found no matches.
+  Detailed audit reports are retained outside the public repository.
+
+Reproduce locally:
+  python3 -m unittest discover -s tests -v
+  SDL_VIDEODRIVER=dummy python3 -m vm_arcade --demo --windowed --seconds 1
+
+Live validation requires your own private configuration. The validation
+scripts produce private evidence and do not change hosts or guest state.
