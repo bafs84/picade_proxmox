@@ -1,11 +1,12 @@
 # VM Arcade
 
 A native, read-only Proxmox dashboard for a Raspberry Pi arcade cabinet.
-It displays host and guest metrics alongside an animated network graph.
+It displays host and guest metrics alongside an animated network graph,
+with an optional third screen for a GPS/PPS time server.
 It uses SDL2 rather than a browser, Electron, or a dashboard VM.
 
 The logical canvas is 800×600 and scales with the display's aspect ratio.
-Both views target 30 frames per second; independent telemetry workers sample
+All views target 30 frames per second; independent telemetry workers sample
 host and guest counters at 2 Hz. Missing data remains unknown, and a failed live
 connection never falls back to demonstration data.
 
@@ -74,11 +75,11 @@ python3 -m vm_arcade --config ~/.config/vm-arcade/config.json --windowed
 python3 -m vm_arcade --config ~/.config/vm-arcade/config.json --check --seconds 15
 ```
 
-`--view network|metrics` chooses the starting view; `--node NAME` selects the
+`--view network|metrics|gps` chooses the starting view; `--node NAME` selects the
 initial host. `--font FILE` overrides the font. Network is the default view.
 
 Keyboard controls: **N** opens Network, **M** opens Metrics, **Space/Tab** toggles
-views, arrows select hosts/guests, Enter or A opens guest details, and Escape or
+views, **G** opens the configured GPS screen, arrows select hosts/guests, Enter or A opens guest details, and Escape or
 B returns to the graph. Close the window to quit. On-screen button legends are
 intentionally hidden.
 
@@ -228,6 +229,44 @@ retrieved for 40 seconds, stop animating.
 The source may use HTTP on a trusted network or HTTPS with system CA validation.
 URL credentials are rejected, and no Proxmox token is sent to the exporter.
 The app does not install, modify or expose an exporter.
+
+## Optional GPS / PPS observatory
+
+An independently deployed GPS Observatory API can provide a third screen:
+
+```json
+"gps_monitor": {"url": "http://192.0.2.20:8080"}
+```
+
+Add this to the private configuration with the actual GPS Pi address. The
+server must allow the cabinet's source network and the URL hostname/IP.
+The app reads only `GET /api/v1/status`, schema 1, at 1 Hz over HTTP on a trusted
+LAN or HTTPS with system CA verification. URL credentials and redirects are
+rejected. No Proxmox credentials are sent to this service. This repository
+contains only the client; the GPS server remains a separate project.
+
+The screen shows measured satellite azimuth/elevation, C/N0 signal bars for up
+to 14 satellites (used first, then strongest), used/visible counts, fix mode,
+receiver position, PPS sequence, stratum/reference, signed last/RMS offset,
+selected-source jitter, a ten-minute history, six time sources, dispersion,
+frequency, temperature, load and current/historical power warnings. Missing
+data stays unknown. Sky symbols use actual reported coordinates; bars ease
+between real readings. The PPS flash marks a received counter change and
+includes polling/network latency. The UTC display is a response-time estimate.
+
+GPS lock, network fallback, holdover, unsynchronised time and unavailable
+telemetry are distinct states. The display stops live indicators when HTTP
+fails, the collector sample stops advancing, or data becomes stale. Chrony's
+usually eight-second reference updates remain distinct history samples;
+polling does not create additional timing measurements. Jitter means chrony's
+selected-source estimated sample standard deviation, not certified UTC accuracy.
+No coordinates or telemetry are written to logs or distributed captures.
+
+With GPS configured, the top-right red/view button cycles **Network → Metrics
+→ GPS → Network**. Front-right still exits; top-left blue remains disabled as
+Exit. Menu launch and joystick host/VM selection are unchanged. Without GPS
+configuration, the original two-view cycle remains. `--demo --view gps` is an
+explicitly labelled fictional preview, never a fallback for a failed live feed.
 
 ## Optional CPU thread readings
 

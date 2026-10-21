@@ -95,6 +95,9 @@ def load_config(path):
         if data.get("wan_monitor"):
             from .wan import validate
             validate(data["wan_monitor"])
+        if data.get("gps_monitor"):
+            from .gps import validate
+            validate(data["gps_monitor"])
         poll = numeric(data.get("poll_seconds", .5))
         if poll is None:
             raise ValueError()

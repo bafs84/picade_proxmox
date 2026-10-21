@@ -9,7 +9,7 @@ DEFAULT_KEYS = {
     1073741906: "up", 1073741905: "down",
     1073742048: "details", 1073742050: "back",
     1073742049: "exit", 32: "toggle_view", 13: "details",
-    27: "back", 97: "details", 98: "back", 120: "overview", 110: "network", 109: "overview", 9: "toggle_view",
+    27: "back", 97: "details", 98: "back", 120: "overview", 110: "network", 109: "overview", 103: "gps", 9: "toggle_view",
 }
 ACTIONS = {"up": "up", "down": "down", "left": "left", "right": "right",
            "a": "details", "b": "back", "x": "toggle_view", "y": "storage",
@@ -61,12 +61,13 @@ class Controls:
 
 
 class Selection:
-    def __init__(self):
+    def __init__(self, gps_enabled=False):
         self.host = 0
         self.guest_key = None
         self.detail = False
         self.storage = 0
         self.view = "network"
+        self.views = ('network', 'metrics', 'gps') if gps_enabled else ('network', 'metrics')
 
     def resolve(self, guests):
         keys = [g["key"] for g in guests]
@@ -92,8 +93,10 @@ class Selection:
             self.view = "network" if action == "back" else "metrics"
         elif action == "network":
             self.view = "network"
+        elif action == "gps" and 'gps' in self.views:
+            self.view = "gps"
         elif action == "toggle_view":
-            self.view = "metrics" if self.view == "network" else "network"
+            self.view = self.views[(self.views.index(self.view) + 1) % len(self.views)]
         elif action == "storage":
             self.storage += 1
         return True

@@ -18,7 +18,7 @@ def parser():
     p.add_argument("--windowed", action="store_true")
     p.add_argument("--node", help="Initially selected node name")
     p.add_argument("--font")
-    p.add_argument("--view", choices=("network", "metrics"), default="network")
+    p.add_argument("--view", choices=("network", "metrics", "gps"), default="network")
     p.add_argument("--input-config", default="/opt/retropie/configs/all/emulationstation/es_input.cfg")
     p.add_argument("--check", action="store_true", help="Check configured API reads, without opening SDL")
     p.add_argument("--seconds", type=float, default=0, help="Exit after this duration (zero: continuous)")
@@ -41,11 +41,13 @@ def main(argv=None):
     args = parser().parse_args(argv)
     if args.seconds < 0 or (args.screenshot and args.seconds <= 0):
         parser().error("--screenshot requires a positive --seconds")
-    wan = None
+    wan = gps = None
     config = {}
     if args.demo:
         from .demo import DemoFleet
         fleet, stale = DemoFleet(), 20
+        from .gps import DemoGPS
+        gps = DemoGPS()
     else:
         try:
             config = load_config(args.config)
@@ -56,6 +58,15 @@ def main(argv=None):
         if config.get("wan_monitor"):
             from .wan import WanMonitor
             wan = WanMonitor(config["wan_monitor"])
+        if config.get("gps_monitor"):
+            from .gps import GPSMonitor
+            gps = GPSMonitor(config["gps_monitor"])
+    if args.view == 'gps' and not gps:
+        print('VM Arcade: GPS view requires gps_monitor in the private configuration.', file=sys.stderr)
+        fleet.close()
+        if wan:
+            wan.close()
+        return 2
     started = time.monotonic()
     if args.check:
         try:
@@ -67,14 +78,18 @@ def main(argv=None):
             fleet.close()
             if wan:
                 wan.close()
+            if gps:
+                gps.close()
     display = None
     try:
         from .display import Display, guests_for, sdl
         display = Display(fullscreen=not args.windowed, font=args.font)
-        controls, selection = Controls(args.input_config, exit_key=config.get("exit_key")), Selection()
+        controls, selection = Controls(args.input_config, exit_key=config.get("exit_key")), Selection(gps_enabled=bool(gps))
         selection.view = args.view
         from .network_view import NetworkView
         network = NetworkView()
+        from .gps_view import GPSView
+        gps_view = GPSView()
         names = [s["name"] for s in fleet.read()]
         if args.node:
             if args.node not in names:
@@ -82,7 +97,7 @@ def main(argv=None):
             selection.host = names.index(args.node)
         running, dirty, painted_at = True, True, 0
         snapshots, fetched_at = fleet.read(), 0
-        wan_snapshot = None
+        wan_snapshot = gps_snapshot = None
         stop = []
         for sig in (signal.SIGINT, signal.SIGTERM):
             signal.signal(sig, lambda *_: stop.append(True))
@@ -91,6 +106,7 @@ def main(argv=None):
             if time.monotonic() - fetched_at >= .25:
                 snapshots = fleet.read()
                 wan_snapshot = fleet.wan() if args.demo else wan.read() if wan else None
+                gps_snapshot = gps.read() if gps else None
                 fetched_at = time.monotonic()
                 network.observe(snapshots, fetched_at, stale)
                 display.metrics.observe(snapshots, fetched_at, stale)
@@ -131,6 +147,8 @@ def main(argv=None):
             if dirty or now - painted_at >= (1 / 30):
                 if selection.view == "network":
                     network.draw(display, snapshots, selection, args.demo, stale, wan_snapshot)
+                elif selection.view == "gps":
+                    gps_view.draw(display, gps_snapshot, now)
                 else:
                     display.draw(snapshots, selection, args.demo, stale)
                 dirty, painted_at = False, now
@@ -147,6 +165,8 @@ def main(argv=None):
         fleet.close()
         if wan:
             wan.close()
+        if gps:
+            gps.close()
         if display:
             display.close()
 

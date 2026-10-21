@@ -30,3 +30,15 @@ Reproduce locally:
 
 Live validation requires your own private configuration. The validation
 scripts produce private evidence and do not change hosts or guest state.
+GPS Observatory screen (2026-10-21)
+- 55 tests passed on the Mac and actual PICADE Python 3.7.3 / PySDL2 0.9.3.
+- Actual cabinet rendered the live schema-1 API, GPS/PPS lock, satellites,
+  signal bars, timing history and current/historical power status; capture inspected privately.
+- The existing view cycle gains GPS only when configured; exit replacement
+  and two-view compatibility remain covered by tests.
+- HTTP failure / frozen sample IDs stop live indicators. Missing fields,
+  signed offsets, polar geometry and invalid API origins are tested.
+- Native service display check exited successfully and returned to RetroPie.
+- GPS server is independently deployed; management credentials remain private.
+- No active cabinet power faults during display validation. GPS-server
+  historical undervoltage remains an unresolved supply/cable limitation.
